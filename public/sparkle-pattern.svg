@@ -1,0 +1,15 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="sparkle-pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <!-- Small sparkle -->
+      <path d="M15,15 L15,10 L15,20 M10,15 L20,15" stroke="white" stroke-width="0.5" opacity="0.6" />
+      <!-- Medium sparkle -->
+      <path d="M35,15 L35,8 L35,22 M28,15 L42,15" stroke="white" stroke-width="0.75" opacity="0.7" />
+      <!-- Large sparkle -->
+      <path d="M15,35 L15,25 L15,45 M5,35 L25,35" stroke="white" stroke-width="1" opacity="0.8" />
+      <!-- Star-like sparkle -->
+      <path d="M30,30 L30,26 L30,34 M26,30 L34,30 M28,28 L32,32 M28,32 L32,28" stroke="white" stroke-width="0.5" opacity="0.9" />
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#sparkle-pattern)" />
+</svg> 
