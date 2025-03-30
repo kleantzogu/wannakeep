@@ -39,6 +39,7 @@ interface NotesContextType {
   updateNote: (id: string, note: Partial<Note>) => Promise<void>
   deleteNote: (id: string) => Promise<void>
   isLoading: boolean
+  getNoteById: (id: string) => Note | undefined
 }
 
 // Create context
@@ -385,11 +386,16 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
         .eq('id', id)
 
       if (error) throw error
-      setNotes(prev => prev.filter(n => n.id !== id))
+
+      setNotes(prev => prev.filter(note => note.id !== id))
     } catch (error) {
-      console.error('Error in deleteNote:', error)
+      console.error('Error deleting note:', error)
       throw error
     }
+  }
+
+  const getNoteById = (id: string): Note | undefined => {
+    return notes.find(note => note.id === id)
   }
 
   return (
@@ -400,7 +406,8 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
       addNote, 
       updateNote, 
       deleteNote, 
-      isLoading 
+      isLoading,
+      getNoteById
     }}>
       {children}
     </NotesContext.Provider>
