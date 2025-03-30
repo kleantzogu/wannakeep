@@ -11,6 +11,7 @@ import { Sidebar } from '@/components/Sidebar'
 import { ThemeSynchronizer } from '@/components/ThemeSynchronizer'
 import { SearchProvider } from '@/providers/SearchProvider'
 import { Toaster } from 'sonner'
+import { Suspense } from 'react'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,6 +23,16 @@ export const metadata = {
   metadataBase: new URL(defaultUrl),
   title: 'Wannakeep - Note Organization App',
   description: 'Capture, organize, and manage notes from various sources with visual sticky notes',
+}
+
+// Fallback component for Suspense
+function Fallback() {
+  return <div className="w-full h-screen flex items-center justify-center">
+    <div className="animate-pulse flex flex-col items-center gap-4">
+      <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+    </div>
+  </div>
 }
 
 export default function RootLayout({
@@ -49,10 +60,14 @@ export default function RootLayout({
                 <SearchProvider>
                   <ThemeSynchronizer />
                   <div className="flex min-h-screen w-full">
-                    <Sidebar />
+                    <Suspense fallback={<div className="w-[240px] h-screen bg-background/80 backdrop-blur-xl border-r border-border"></div>}>
+                      <Sidebar />
+                    </Suspense>
                     <div className="flex-1 w-full">
                       <main className="h-full">
-                        {children}
+                        <Suspense fallback={<Fallback />}>
+                          {children}
+                        </Suspense>
                       </main>
                     </div>
                   </div>

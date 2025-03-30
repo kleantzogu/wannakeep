@@ -1,3 +1,7 @@
+// Import these directives at the very beginning of the file
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
