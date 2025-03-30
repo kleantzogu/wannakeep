@@ -1,8 +1,8 @@
-// Import these directives at the very beginning of the file
+'use client'
+
+// Import these directives after the 'use client' directive
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-
-'use client'
 
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
