@@ -43,7 +43,7 @@ const saveSettingsToSupabase = async (userId: string, settings: Partial<UserSett
         .from('user_settings')
         .insert([{ 
           user_id: userId,
-          theme: settings.theme || 'dark',
+          theme: settings.theme || 'light',
           notes_per_project: settings.notesPerProject || 3,
           note_char_limit: settings.noteCharLimit || 280
         }]);
@@ -59,7 +59,7 @@ const saveSettingsToSupabase = async (userId: string, settings: Partial<UserSett
 export const useSettings = create<SettingsState>()(
   persist(
     (set, get) => ({
-      theme: 'dark',
+      theme: 'light',
       notesPerProject: 3,
       noteCharLimit: 280,
       isLoading: false,
