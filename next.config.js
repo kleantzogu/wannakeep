@@ -9,8 +9,6 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
-    // Disable static builds
-    disableStaticGeneration: true,
     // Disable static optimization
     disableOptimizedLoading: true,
   },
@@ -21,10 +19,6 @@ const nextConfig = {
   trailingSlash: false,
   // Force all pages to be dynamically rendered
   staticPageGenerationTimeout: 300,
-  // Set all pages to dynamic
-  compiler: {
-    styledComponents: true,
-  },
   // Ensure dynamic rendering is enforced
   env: {
     NEXT_PUBLIC_FORCE_DYNAMIC: 'true',

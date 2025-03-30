@@ -1,9 +1,7 @@
-// Force disable static generation for all routes
-export const dynamic = 'force-dynamic'
-export const dynamicParams = true
-export const revalidate = 0
-export const fetchCache = 'force-no-store'
-export const runtime = 'nodejs'
+// Ensure pages are rendered dynamically
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+export const revalidate = 0;
 
 import { Inter } from 'next/font/google'
 import ThemeProvider from '@/providers/ThemeProvider'
@@ -19,9 +17,7 @@ import { ThemeSynchronizer } from '@/components/ThemeSynchronizer'
 import { SearchProvider } from '@/providers/SearchProvider'
 import { Toaster } from 'sonner'
 import { Suspense } from 'react'
-
-// Import global config
-import './config'
+import ClientOnly from '@/components/ClientOnly'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -35,25 +31,22 @@ export const metadata = {
   description: 'Capture, organize, and manage notes from various sources with visual sticky notes',
 }
 
-// Fallback component for Suspense
-function Fallback() {
-  return <div className="w-full h-screen flex items-center justify-center">
-    <div className="animate-pulse flex flex-col items-center gap-4">
-      <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-      <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
-    </div>
-  </div>
+// Fallback for sidebar
+function SidebarFallback() {
+  return <div className="w-[240px] h-screen bg-background/80 backdrop-blur-xl border-r border-border" />
 }
 
 // Fallback for page content
 function PageLoadingFallback() {
-  return <div className="flex-1 h-full w-full bg-background flex items-center justify-center">
-    <div className="animate-pulse flex flex-col items-center gap-4">
-      <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
-      <div className="h-4 w-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
-      <div className="h-4 w-80 bg-gray-200 dark:bg-gray-700 rounded"></div>
+  return (
+    <div className="flex-1 h-full w-full bg-background flex items-center justify-center">
+      <div className="animate-pulse flex flex-col items-center gap-4">
+        <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        <div className="h-4 w-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        <div className="h-4 w-80 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      </div>
     </div>
-  </div>
+  )
 }
 
 export default function RootLayout({
@@ -81,14 +74,14 @@ export default function RootLayout({
                 <SearchProvider>
                   <ThemeSynchronizer />
                   <div className="flex min-h-screen w-full">
-                    <Suspense fallback={<div className="w-[240px] h-screen bg-background/80 backdrop-blur-xl border-r border-border"></div>}>
+                    <Suspense fallback={<SidebarFallback />}>
                       <Sidebar />
                     </Suspense>
                     <div className="flex-1 w-full">
                       <main className="h-full">
-                        <Suspense fallback={<PageLoadingFallback />}>
+                        <ClientOnly fallback={<PageLoadingFallback />}>
                           {children}
-                        </Suspense>
+                        </ClientOnly>
                       </main>
                     </div>
                   </div>
