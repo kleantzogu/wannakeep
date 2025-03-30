@@ -2,11 +2,41 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState, useEffect, useRef, createContext, useContext } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { 
   PlusIcon,
-  FileTextIcon,
+  SettingsIcon, 
+  HomeIcon, 
+  Search, 
   BookmarkIcon, 
+  FolderIcon, 
+  Trash2Icon 
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
+import { useNotes, Note } from '@/providers/NotesProvider'
+import { useSearch } from '@/providers/SearchProvider'
+import { supabase } from '@/lib/supabase'
+import { cn } from '@/utils/cn'
+import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover'
+import { 
+  FileTextIcon,
   GearIcon, 
   MagnifyingGlassIcon,
   TrashIcon,
@@ -16,30 +46,12 @@ import {
   ArrowRightIcon,
 } from '@radix-ui/react-icons'
 import Image from 'next/image'
-import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
-import { supabase, testBucketAccess } from '@/lib/supabase'
-import { toast } from 'sonner'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { useSearch } from '@/providers/SearchProvider'
 
 // Navigation items with their routes and functionality
 const NAV_ITEMS = [
@@ -152,15 +164,7 @@ export function Sidebar() {
     async function initializeBuckets() {
       try {
         console.log('Initializing buckets...')
-        // First test if we can access the buckets table
-        const canAccessBuckets = await testBucketAccess()
-        if (!canAccessBuckets) {
-          console.error('Cannot access buckets table')
-          toast.error('Failed to connect to buckets. Please check your connection.')
-          return
-        }
-
-        // If we can access the table, fetch the buckets
+        // Directly fetch buckets without testing access first
         await fetchBuckets()
 
         console.log('Setting up real-time subscription...')
