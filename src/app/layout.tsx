@@ -14,7 +14,7 @@ import { Toaster } from 'sonner'
 import { Suspense } from 'react'
 
 // Import global config
-import './config.js'
+import './config'
 
 const inter = Inter({ subsets: ['latin'] })
 
