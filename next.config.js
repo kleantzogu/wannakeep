@@ -12,7 +12,15 @@ const nextConfig = {
   },
   // Disable static optimization to prevent hydration errors with useSearchParams()
   reactStrictMode: false,
-  swcMinify: true
+  swcMinify: true,
+  // Force dynamic rendering for all pages
+  trailingSlash: false,
+  // Force all pages to be dynamically rendered
+  staticPageGenerationTimeout: 300,
+  // Ensure dynamic rendering is enforced
+  env: {
+    NEXT_FORCE_DYNAMIC: 'true',
+  }
 }
 
 module.exports = withBundleAnalyzer(nextConfig)

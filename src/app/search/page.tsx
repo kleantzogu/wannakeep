@@ -1,5 +1,8 @@
 'use client'
 
+// Import dynamic config
+export * from '../../dynamicConfig'
+
 // Import these directives after the 'use client' directive
 export const dynamic = 'force-dynamic'
 export const revalidate = 0

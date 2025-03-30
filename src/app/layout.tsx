@@ -38,6 +38,17 @@ function Fallback() {
   </div>
 }
 
+// Fallback for page content
+function PageLoadingFallback() {
+  return <div className="flex-1 h-full w-full bg-background flex items-center justify-center">
+    <div className="animate-pulse flex flex-col items-center gap-4">
+      <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      <div className="h-4 w-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      <div className="h-4 w-80 bg-gray-200 dark:bg-gray-700 rounded"></div>
+    </div>
+  </div>
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -68,7 +79,7 @@ export default function RootLayout({
                     </Suspense>
                     <div className="flex-1 w-full">
                       <main className="h-full">
-                        <Suspense fallback={<Fallback />}>
+                        <Suspense fallback={<PageLoadingFallback />}>
                           {children}
                         </Suspense>
                       </main>
