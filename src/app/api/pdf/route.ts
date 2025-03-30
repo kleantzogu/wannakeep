@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import pdf from 'pdf-parse';
 
 export async function POST(req: Request) {
   try {
@@ -36,8 +35,11 @@ export async function POST(req: Request) {
       // Convert file to buffer
       const buffer = Buffer.from(await file.arrayBuffer());
 
+      // Dynamically import pdf-parse only when the route is called
+      const pdfParse = await import('pdf-parse');
+      
       // Parse PDF content to text
-      const data = await pdf(buffer);
+      const data = await pdfParse.default(buffer);
       const text = data.text;
 
       // Generate a unique ID for the file
