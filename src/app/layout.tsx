@@ -13,6 +13,9 @@ import { SearchProvider } from '@/providers/SearchProvider'
 import { Toaster } from 'sonner'
 import { Suspense } from 'react'
 
+// Import global config
+import './config.js'
+
 const inter = Inter({ subsets: ['latin'] })
 
 const defaultUrl = process.env.VERCEL_URL
