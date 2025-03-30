@@ -734,7 +734,7 @@ export function Sidebar() {
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-muted-foreground">
-              Are you sure you want to delete "{deletingBucket?.name}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{deletingBucket?.name}&quot;? This action cannot be undone.
             </p>
           </div>
           <DialogFooter>

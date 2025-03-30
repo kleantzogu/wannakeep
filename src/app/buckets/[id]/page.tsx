@@ -391,7 +391,7 @@ export default function BucketPage() {
           <div className="flex flex-col items-center justify-center h-[400px] text-muted-foreground">
             <FolderIcon className="w-12 h-12 mb-4" />
             <p className="text-lg">No notes in this bucket yet</p>
-            <p className="text-sm">Click "New Note" to create one</p>
+            <p className="text-sm">Click &quot;New Note&quot; to create one</p>
           </div>
         )}
       </div>
