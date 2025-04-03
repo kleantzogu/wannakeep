@@ -1,11 +1,22 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { useNotes, Note, Project as ProjectType } from '@/providers/NotesProvider'
+import {
+  useNotes,
+  Note,
+  Project as ProjectType,
+} from '@/providers/NotesProvider'
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
-import { FileText, ChevronRight, ChevronLeft, BookmarkIcon, FolderIcon, Plus } from 'lucide-react'
+import {
+  FileText,
+  ChevronRight,
+  ChevronLeft,
+  BookmarkIcon,
+  FolderIcon,
+  Plus,
+} from 'lucide-react'
 import { DotsHorizontalIcon, TrashIcon } from '@radix-ui/react-icons'
 import { generateNoteTitle } from '@/lib/utils'
 import {
@@ -65,9 +76,11 @@ export default function NotesPage() {
   // Helper function to generate a project title based on its content
   const generateProjectTitle = (project: ProjectType) => {
     // If there are notes, use their content to generate a title
-    const projectNotes = notes.filter(note => note.projectId === project.id && !note.bucketId)
+    const projectNotes = notes.filter(
+      (note) => note.projectId === project.id && !note.bucketId,
+    )
     if (projectNotes.length > 0) {
-      const allContent = projectNotes.map(note => note.content).join(' ')
+      const allContent = projectNotes.map((note) => note.content).join(' ')
       return generateNoteTitle(allContent)
     }
     // If no notes but has source text, generate from source text
@@ -81,26 +94,31 @@ export default function NotesPage() {
   // Group notes by their project
   const projectsWithNotes = useMemo(() => {
     // Create a map of projects with their notes
-    return projects.map(project => {
-      // Filter out notes that belong to buckets
-      const projectNotes = notes.filter(note => 
-        note.projectId === project.id && !note.bucketId
-      )
-      const enrichedProject: Project = {
-        ...project,
-        notes: projectNotes,
-        createdAt: new Date(project.createdAt),
-        displayTitle: generateProjectTitle(project) // Use the generated title instead of the original
-      }
-      return enrichedProject
-    }).filter(project => project.notes.length > 0) // Only show projects that have notes
+    return projects
+      .map((project) => {
+        // Filter out notes that belong to buckets
+        const projectNotes = notes.filter(
+          (note) => note.projectId === project.id && !note.bucketId,
+        )
+        const enrichedProject: Project = {
+          ...project,
+          notes: projectNotes,
+          createdAt: new Date(project.createdAt),
+          displayTitle: generateProjectTitle(project), // Use the generated title instead of the original
+        }
+        return enrichedProject
+      })
+      .filter((project) => project.notes.length > 0) // Only show projects that have notes
   }, [projects, notes])
 
   // Filter projects based on search
   const filteredProjects = useMemo(() => {
-    return projectsWithNotes.filter(project => 
-      project.displayTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.sourceText.toLowerCase().includes(searchQuery.toLowerCase())
+    return projectsWithNotes.filter(
+      (project) =>
+        project.displayTitle
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        project.sourceText.toLowerCase().includes(searchQuery.toLowerCase()),
     )
   }, [projectsWithNotes, searchQuery])
 
@@ -124,22 +142,22 @@ export default function NotesPage() {
         console.warn('Note does not belong to the currently selected project')
         return
       }
-      
+
       // Reset scroll position
       textarea.scrollTop = 0
-      
+
       // Find complete sentence boundaries
       const text = selectedProject.sourceText || ''
-      
+
       // Get the correct position from the note
       const start = note.textPosition.start
       const end = note.textPosition.end
-      
+
       // If the positions are both 0, which means there's no specific text position,
       // we'll just highlight the entire note content in the source
       let effectiveStart = start
       let effectiveEnd = end
-      
+
       if (start === 0 && end === 0) {
         // Try to find the note content in the source text
         const contentPos = text.indexOf(note.content)
@@ -148,11 +166,15 @@ export default function NotesPage() {
           effectiveEnd = contentPos + note.content.length
         }
       }
-      
-      const boundaries = findSentenceBoundaries(text, effectiveStart, effectiveEnd)
+
+      const boundaries = findSentenceBoundaries(
+        text,
+        effectiveStart,
+        effectiveEnd,
+      )
       const boundaryStart = boundaries.start
       const boundaryEnd = boundaries.end
-      
+
       // Create a temporary div to measure the exact height
       const tempDiv = document.createElement('div')
       tempDiv.style.width = `${textarea.clientWidth - 48}px` // Account for padding
@@ -161,25 +183,28 @@ export default function NotesPage() {
       tempDiv.style.whiteSpace = 'pre-wrap'
       tempDiv.textContent = text.substring(0, boundaryStart)
       document.body.appendChild(tempDiv)
-      
+
       // Get the exact height up to the selection start
       const heightUpToSelection = tempDiv.offsetHeight
-      
+
       // Calculate the height of the selected text
       tempDiv.textContent = text.substring(boundaryStart, boundaryEnd)
       const selectionHeight = tempDiv.offsetHeight
-      
+
       // Clean up
       document.body.removeChild(tempDiv)
-      
+
       // Calculate the scroll position to center the selection
       const viewportHeight = textarea.clientHeight
-      const scrollPosition = Math.max(0, heightUpToSelection - (viewportHeight / 2) + (selectionHeight / 2))
-      
+      const scrollPosition = Math.max(
+        0,
+        heightUpToSelection - viewportHeight / 2 + selectionHeight / 2,
+      )
+
       // Smooth scroll to position
       textarea.scrollTo({
         top: scrollPosition,
-        behavior: 'smooth'
+        behavior: 'smooth',
       })
 
       // Remove any existing highlights
@@ -188,7 +213,10 @@ export default function NotesPage() {
         const highlight = existingHighlights[0]
         const parent = highlight.parentNode
         if (parent) {
-          parent.replaceChild(document.createTextNode(highlight.textContent || ''), highlight)
+          parent.replaceChild(
+            document.createTextNode(highlight.textContent || ''),
+            highlight,
+          )
         }
       }
 
@@ -205,12 +233,12 @@ export default function NotesPage() {
       if (beforeText) {
         textarea.appendChild(document.createTextNode(beforeText))
       }
-      
+
       const highlightSpan = document.createElement('span')
       highlightSpan.className = 'highlight'
       highlightSpan.textContent = selectedText
       textarea.appendChild(highlightSpan)
-      
+
       if (afterText) {
         textarea.appendChild(document.createTextNode(afterText))
       }
@@ -223,8 +251,12 @@ export default function NotesPage() {
     let sentenceStart = start
     while (sentenceStart > 0) {
       // Check for sentence boundaries (., !, ?) followed by space or newline
-      if ((text[sentenceStart - 1] === '.' || text[sentenceStart - 1] === '!' || text[sentenceStart - 1] === '?') &&
-          (text[sentenceStart] === ' ' || text[sentenceStart] === '\n')) {
+      if (
+        (text[sentenceStart - 1] === '.' ||
+          text[sentenceStart - 1] === '!' ||
+          text[sentenceStart - 1] === '?') &&
+        (text[sentenceStart] === ' ' || text[sentenceStart] === '\n')
+      ) {
         break
       }
       sentenceStart--
@@ -233,7 +265,11 @@ export default function NotesPage() {
     // Look forward for sentence end (period, exclamation, question mark)
     let sentenceEnd = end
     while (sentenceEnd < text.length) {
-      if (text[sentenceEnd] === '.' || text[sentenceEnd] === '!' || text[sentenceEnd] === '?') {
+      if (
+        text[sentenceEnd] === '.' ||
+        text[sentenceEnd] === '!' ||
+        text[sentenceEnd] === '?'
+      ) {
         sentenceEnd++
         break
       }
@@ -247,10 +283,10 @@ export default function NotesPage() {
     e.stopPropagation() // Prevent note selection when clicking bookmark
     setBookmarkLoading(noteId)
     setError(null)
-    
+
     try {
-    const note = notes.find(n => n.id === noteId)
-    if (note) {
+      const note = notes.find((n) => n.id === noteId)
+      if (note) {
         await updateNote(noteId, { isBookmarked: !note.isBookmarked })
       }
     } catch (error) {
@@ -263,7 +299,7 @@ export default function NotesPage() {
 
   // Fetch buckets on mount
   useEffect(() => {
-    let channel: any;
+    let channel: any
 
     async function initializeBuckets() {
       try {
@@ -279,12 +315,13 @@ export default function NotesPage() {
         // Set up real-time subscription
         channel = supabase
           .channel('buckets_changes')
-          .on('postgres_changes', 
-            { 
-              event: '*', 
-              schema: 'public', 
-              table: 'buckets' 
-            }, 
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'buckets',
+            },
             (payload) => {
               if (!payload) {
                 console.error('Received null payload in bucket changes')
@@ -297,9 +334,9 @@ export default function NotesPage() {
               if (payload.eventType === 'INSERT' && payload.new) {
                 const newBucket = payload.new as Bucket
                 console.log('Adding new bucket to state:', newBucket)
-                setBuckets(prev => {
+                setBuckets((prev) => {
                   // Check if bucket already exists to prevent duplicates
-                  if (prev.some(bucket => bucket.id === newBucket.id)) {
+                  if (prev.some((bucket) => bucket.id === newBucket.id)) {
                     return prev
                   }
                   const newBuckets = [...prev, newBucket]
@@ -311,22 +348,25 @@ export default function NotesPage() {
               else if (payload.eventType === 'DELETE' && payload.old) {
                 const deletedBucket = payload.old as Bucket
                 console.log('Removing bucket from state:', deletedBucket)
-                setBuckets(prev => prev.filter(bucket => bucket.id !== deletedBucket.id))
+                setBuckets((prev) =>
+                  prev.filter((bucket) => bucket.id !== deletedBucket.id),
+                )
               }
               // Handle UPDATE event
               else if (payload.eventType === 'UPDATE' && payload.new) {
                 const updatedBucket = payload.new as Bucket
                 console.log('Updating bucket in state:', updatedBucket)
-                setBuckets(prev => prev.map(bucket => 
-                  bucket.id === updatedBucket.id ? updatedBucket : bucket
-                ))
+                setBuckets((prev) =>
+                  prev.map((bucket) =>
+                    bucket.id === updatedBucket.id ? updatedBucket : bucket,
+                  ),
+                )
               }
-            }
+            },
           )
           .subscribe((status) => {
             console.log('Subscription status:', status)
           })
-
       } catch (error) {
         console.error('Error initializing buckets:', error)
         toast.error('Failed to load buckets')
@@ -362,12 +402,25 @@ export default function NotesPage() {
 
     setIsLoading(true)
     try {
+      console.log('Adding note to bucket:', {
+        noteId: selectedNote.id,
+        bucketId,
+        note: selectedNote,
+      })
+
       await updateNote(selectedNote.id, { bucketId })
+      console.log('Successfully updated note with bucket ID')
+
       setIsAddToBucketOpen(false)
       setSelectedNote(null)
       toast.success('Note added to bucket successfully')
     } catch (error) {
       console.error('Error adding note to bucket:', error)
+      console.error('Error details:', {
+        noteId: selectedNote.id,
+        bucketId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
       toast.error('Failed to add note to bucket')
     } finally {
       setIsLoading(false)
@@ -385,10 +438,12 @@ export default function NotesPage() {
       // Create the bucket
       const { data: bucket, error: bucketError } = await supabase
         .from('buckets')
-        .insert([{ 
-          name: newBucketName.trim(),
-          updated_at: new Date().toISOString()
-        }])
+        .insert([
+          {
+            name: newBucketName.trim(),
+            updated_at: new Date().toISOString(),
+          },
+        ])
         .select()
         .single()
 
@@ -405,7 +460,10 @@ export default function NotesPage() {
       // Add the note to the newly created bucket
       if (selectedNote) {
         try {
-          console.log('Adding note to bucket:', { noteId: selectedNote.id, bucketId: bucket.id })
+          console.log('Adding note to bucket:', {
+            noteId: selectedNote.id,
+            bucketId: bucket.id,
+          })
           await updateNote(selectedNote.id, { bucketId: bucket.id })
           setIsAddToBucketOpen(false)
           setSelectedNote(null)
@@ -450,17 +508,17 @@ export default function NotesPage() {
     <div className="flex h-screen bg-background">
       <style>{highlightStyles}</style>
       {/* Projects List */}
-      <div className="h-screen bg-white border-r border-zinc-200 w-72 flex flex-col shrink-0">
-        <div className="p-3 border-b border-zinc-200">
+      <div className="flex h-screen w-72 shrink-0 flex-col border-r border-zinc-200 bg-white">
+        <div className="border-b border-zinc-200 p-3">
           <div className="relative">
             <input
               type="text"
               placeholder="Search projects..."
-              className="w-full px-3 py-1.5 text-sm rounded-md border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-black/5 pl-8"
+              className="w-full rounded-md border border-zinc-200 px-3 py-1.5 pl-8 text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <FileText className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-zinc-400" />
+            <FileText className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-3">
@@ -468,17 +526,20 @@ export default function NotesPage() {
             {filteredProjects.map((project) => (
               <div
                 key={project.id}
-                className={`rounded-lg border ${selectedProject?.id === project.id ? 'border-black' : 'border-zinc-200'} p-3 hover:border-zinc-400 transition-colors cursor-pointer`}
+                className={`rounded-lg border ${selectedProject?.id === project.id ? 'border-black' : 'border-zinc-200'} cursor-pointer p-3 transition-colors hover:border-zinc-400`}
                 onClick={() => setSelectedProject(project)}
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1.5 rounded-md bg-zinc-100 text-zinc-600 shrink-0">
-                    <FileText className="w-3.5 h-3.5" />
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="shrink-0 rounded-md bg-zinc-100 p-1.5 text-zinc-600">
+                    <FileText className="h-3.5 w-3.5" />
                   </div>
-                  <h2 className="font-medium text-[14px] line-clamp-1">{project.displayTitle}</h2>
+                  <h2 className="line-clamp-1 text-[14px] font-medium">
+                    {project.displayTitle}
+                  </h2>
                 </div>
                 <div className="text-[10px] text-zinc-500">
-                  {project.notes.length} notes • {formatDistanceToNow(project.createdAt, { addSuffix: true })}
+                  {project.notes.length} notes •{' '}
+                  {formatDistanceToNow(project.createdAt, { addSuffix: true })}
                 </div>
               </div>
             ))}
@@ -487,16 +548,18 @@ export default function NotesPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex bg-zinc-50 min-w-0 justify-center h-screen">
+      <div className="flex h-screen min-w-0 flex-1 justify-center bg-zinc-50">
         {selectedProject ? (
           <>
             {/* Source Text */}
-            <div className="w-[400px] border-r border-zinc-200 flex flex-col bg-white min-w-0 h-screen">
-              <div className="p-3 border-b border-zinc-200 flex-shrink-0">
-                <h2 className="font-medium text-sm line-clamp-1">{selectedProject.displayTitle}</h2>
+            <div className="flex h-screen w-[400px] min-w-0 flex-col border-r border-zinc-200 bg-white">
+              <div className="flex-shrink-0 border-b border-zinc-200 p-3">
+                <h2 className="line-clamp-1 text-sm font-medium">
+                  {selectedProject.displayTitle}
+                </h2>
               </div>
               <div className="flex-1 overflow-y-auto p-4">
-                <div 
+                <div
                   id="source-text"
                   className="prose prose-zinc prose-sm max-w-none"
                 >
@@ -506,24 +569,24 @@ export default function NotesPage() {
             </div>
 
             {/* Notes */}
-            <div className="w-[600px] flex flex-col bg-white min-w-0 h-screen">
-              <div className="p-3 border-b border-zinc-200 flex-shrink-0">
-                <h2 className="font-medium text-sm">Generated Notes</h2>
+            <div className="flex h-screen w-[600px] min-w-0 flex-col bg-white">
+              <div className="flex-shrink-0 border-b border-zinc-200 p-3">
+                <h2 className="text-sm font-medium">Generated Notes</h2>
               </div>
               <div className="flex-1 overflow-y-auto p-4">
                 <div className="grid grid-cols-2 gap-3">
                   {selectedProject.notes.map((note) => (
                     <div
                       key={note.id}
-                      className={`p-3 rounded-lg border ${getNoteColorClass(note.sentiment)} shadow-sm hover:shadow-md transition-all cursor-pointer group relative`}
+                      className={`rounded-lg border p-3 ${getNoteColorClass(note.sentiment)} group relative cursor-pointer shadow-sm transition-all hover:shadow-md`}
                       onClick={() => handleNoteClick(note)}
                     >
                       <p className="text-base">{note.content}</p>
-                      <div className="flex flex-wrap gap-1 mt-2">
+                      <div className="mt-2 flex flex-wrap gap-1">
                         {note.tags.map((tag, tagIndex) => (
-                          <span 
+                          <span
                             key={tagIndex}
-                            className="bg-white/50 px-1.5 py-0.5 rounded text-[10px] font-normal opacity-75"
+                            className="rounded bg-white/50 px-1.5 py-0.5 text-[10px] font-normal opacity-75"
                           >
                             {tag}
                           </span>
@@ -532,14 +595,16 @@ export default function NotesPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className={`absolute right-2 top-2 h-6 w-6 p-1 opacity-0 group-hover:opacity-100 transition-opacity ${note.isBookmarked ? '!opacity-100' : ''}`}
+                        className={`absolute right-2 top-2 h-6 w-6 p-1 opacity-0 transition-opacity group-hover:opacity-100 ${note.isBookmarked ? '!opacity-100' : ''}`}
                         onClick={(e) => handleBookmark(note.id, e)}
                         disabled={bookmarkLoading === note.id}
                       >
                         {bookmarkLoading === note.id ? (
                           <div className="h-full w-full animate-spin rounded-full border-2 border-black/10 border-t-black" />
                         ) : (
-                          <BookmarkIcon className={`h-full w-full ${note.isBookmarked ? 'fill-current' : ''}`} />
+                          <BookmarkIcon
+                            className={`h-full w-full ${note.isBookmarked ? 'fill-current' : ''}`}
+                          />
                         )}
                       </Button>
                       <div className="absolute bottom-2 right-2">
@@ -548,7 +613,7 @@ export default function NotesPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground"
+                              className="h-7 w-7 text-muted-foreground opacity-0 hover:text-foreground group-hover:opacity-100"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <DotsHorizontalIcon className="h-4 w-4" />
@@ -585,13 +650,13 @@ export default function NotesPage() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+          <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
             Select a project to view its notes
           </div>
         )}
       </div>
       {error && (
-        <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="fixed bottom-4 right-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
           {error}
         </div>
       )}
@@ -602,11 +667,15 @@ export default function NotesPage() {
           <DialogHeader>
             <DialogTitle>Delete Note</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this note? This action cannot be undone.
+              Are you sure you want to delete this note? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDeleteNote}>
@@ -627,8 +696,8 @@ export default function NotesPage() {
           </DialogHeader>
           <div className="space-y-4">
             {/* Existing buckets */}
-            <div className="space-y-2 max-h-[240px] overflow-y-auto">
-              {buckets.map(bucket => (
+            <div className="max-h-[240px] space-y-2 overflow-y-auto">
+              {buckets.map((bucket) => (
                 <Button
                   key={bucket.id}
                   variant="outline"
@@ -641,28 +710,35 @@ export default function NotesPage() {
                 </Button>
               ))}
               {buckets.length === 0 && (
-                <p className="text-sm text-muted-foreground">No buckets available</p>
+                <p className="text-sm text-muted-foreground">
+                  No buckets available
+                </p>
               )}
             </div>
-            
+
             {/* Create new bucket section */}
-            <div className="pt-4 border-t">
-              <h3 className="text-sm font-medium mb-2">Create New Bucket</h3>
+            <div className="border-t pt-4">
+              <h3 className="mb-2 text-sm font-medium">Create New Bucket</h3>
               <div className="flex gap-2">
                 <Input
                   placeholder="Enter bucket name"
                   value={newBucketName}
                   onChange={(e) => setNewBucketName(e.target.value)}
                   className="flex-1"
-                  onKeyDown={(e) => e.key === 'Enter' && !isLoading && newBucketName.trim() && handleCreateBucket()}
+                  onKeyDown={(e) =>
+                    e.key === 'Enter' &&
+                    !isLoading &&
+                    newBucketName.trim() &&
+                    handleCreateBucket()
+                  }
                 />
-                <Button 
+                <Button
                   onClick={handleCreateBucket}
                   disabled={isLoading || !newBucketName.trim()}
                   className="bg-black text-white hover:bg-black/90"
                 >
                   {isLoading ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground"/>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
                   ) : (
                     <Plus className="h-4 w-4" />
                   )}
@@ -671,7 +747,10 @@ export default function NotesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddToBucketOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddToBucketOpen(false)}
+            >
               Cancel
             </Button>
           </DialogFooter>
@@ -691,16 +770,19 @@ export default function NotesPage() {
             <input
               type="text"
               placeholder="Bucket Name"
-              className="w-full px-3 py-1.5 text-sm rounded-md border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-black/5"
+              className="w-full rounded-md border border-zinc-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
               value={newBucketName}
               onChange={(e) => setNewBucketName(e.target.value)}
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateBucketOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateBucketOpen(false)}
+            >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleCreateBucket}
               className="bg-black text-white hover:bg-black/90"
               disabled={isLoading}
@@ -712,4 +794,4 @@ export default function NotesPage() {
       </Dialog>
     </div>
   )
-} 
+}

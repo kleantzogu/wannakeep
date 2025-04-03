@@ -1,7 +1,9 @@
-// Ensure pages are rendered dynamically
-export const dynamic = 'force-dynamic';
-export const dynamicParams = true;
-export const revalidate = 0;
+// Import dynamic config
+export * from '../dynamicConfig'
+
+// Server-side configuration
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 import { Inter } from 'next/font/google'
 import ThemeProvider from '@/providers/ThemeProvider'
@@ -28,22 +30,25 @@ const defaultUrl = process.env.VERCEL_URL
 export const metadata = {
   metadataBase: new URL(defaultUrl),
   title: 'Wannakeep - Note Organization App',
-  description: 'Capture, organize, and manage notes from various sources with visual sticky notes',
+  description:
+    'Capture, organize, and manage notes from various sources with visual sticky notes',
 }
 
 // Fallback for sidebar
 function SidebarFallback() {
-  return <div className="w-[240px] h-screen bg-background/80 backdrop-blur-xl border-r border-border" />
+  return (
+    <div className="h-screen w-[240px] border-r border-border bg-background/80 backdrop-blur-xl" />
+  )
 }
 
 // Fallback for page content
 function PageLoadingFallback() {
   return (
-    <div className="flex-1 h-full w-full bg-background flex items-center justify-center">
-      <div className="animate-pulse flex flex-col items-center gap-4">
-        <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
-        <div className="h-4 w-96 bg-gray-200 dark:bg-gray-700 rounded"></div>
-        <div className="h-4 w-80 bg-gray-200 dark:bg-gray-700 rounded"></div>
+    <div className="flex h-full w-full flex-1 items-center justify-center bg-background">
+      <div className="flex animate-pulse flex-col items-center gap-4">
+        <div className="h-8 w-64 rounded bg-gray-200 dark:bg-gray-700"></div>
+        <div className="h-4 w-96 rounded bg-gray-200 dark:bg-gray-700"></div>
+        <div className="h-4 w-80 rounded bg-gray-200 dark:bg-gray-700"></div>
       </div>
     </div>
   )
@@ -60,7 +65,7 @@ export default function RootLayout({
       className={`${inter.className} antialiased`}
       suppressHydrationWarning
     >
-      <body className="bg-background text-foreground min-h-screen">
+      <body className="min-h-screen bg-background text-foreground">
         <NextTopLoader showSpinner={false} height={1} color="#09090b" />
         <ThemeProvider
           attribute="class"
@@ -77,7 +82,7 @@ export default function RootLayout({
                     <Suspense fallback={<SidebarFallback />}>
                       <Sidebar />
                     </Suspense>
-                    <div className="flex-1 w-full">
+                    <div className="w-full flex-1">
                       <main className="h-full">
                         <ClientOnly fallback={<PageLoadingFallback />}>
                           {children}
@@ -96,4 +101,4 @@ export default function RootLayout({
       </body>
     </html>
   )
-} 
+}
