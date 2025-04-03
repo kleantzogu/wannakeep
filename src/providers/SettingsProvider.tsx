@@ -1,19 +1,40 @@
 'use client'
 
-import { useEffect, ReactNode } from 'react'
-import { useSettings } from '@/lib/store/settings'
+import { createContext, useContext, useState, ReactNode } from 'react'
+
+interface SettingsContextType {
+  settings: {
+    theme: 'light' | 'dark' | 'system'
+    sidebarCollapsed: boolean
+  }
+  setSettings: (settings: SettingsContextType['settings']) => void
+}
+
+const SettingsContext = createContext<SettingsContextType>({
+  settings: {
+    theme: 'system',
+    sidebarCollapsed: false,
+  },
+  setSettings: () => {},
+})
+
+export function useSettings() {
+  return useContext(SettingsContext)
+}
 
 interface SettingsProviderProps {
   children: ReactNode
 }
 
 export function SettingsProvider({ children }: SettingsProviderProps) {
-  const { loadUserSettings } = useSettings()
+  const [settings, setSettings] = useState<SettingsContextType['settings']>({
+    theme: 'system',
+    sidebarCollapsed: false,
+  })
 
-  // Load user settings once on app initialization
-  useEffect(() => {
-    loadUserSettings()
-  }, [loadUserSettings])
-
-  return <>{children}</>
-} 
+  return (
+    <SettingsContext.Provider value={{ settings, setSettings }}>
+      {children}
+    </SettingsContext.Provider>
+  )
+}

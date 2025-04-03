@@ -1,825 +1,131 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState } from 'react'
+import { signOut } from '@/lib/auth'
+import { useSettings } from '@/providers/SettingsProvider'
+import { cn } from '@/lib/utils'
 import {
-  PlusIcon,
-  SettingsIcon,
-  HomeIcon,
-  Search,
-  BookmarkIcon,
-  FolderIcon,
-  Trash2Icon,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
-import { useNotes, Note } from '@/providers/NotesProvider'
-import { useSearch } from '@/providers/SearchProvider'
-import { supabase } from '@/lib/supabase'
-import { cn } from '@/utils/cn'
-import { toast } from 'sonner'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import {
-  FileTextIcon,
-  GearIcon,
   MagnifyingGlassIcon,
-  TrashIcon,
-  DotsHorizontalIcon,
-  Pencil1Icon,
-  ChevronDownIcon,
-  ArrowRightIcon,
-} from '@radix-ui/react-icons'
-import Image from 'next/image'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+  HomeIcon,
+  DocumentIcon,
+  FolderIcon,
+  BookmarkIcon,
+  TagIcon,
+  Cog6ToothIcon,
+  QuestionMarkCircleIcon,
+  InformationCircleIcon,
+  ArrowLeftOnRectangleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from '@heroicons/react/24/outline'
 
-// Navigation items with their routes and functionality
-const NAV_ITEMS = [
-  {
-    href: '/',
-    icon: PlusIcon,
-    label: 'New',
-    description: 'Create new notes from text or files',
-  },
-  {
-    href: '/notes',
-    icon: FileTextIcon,
-    label: 'Notes',
-    description: 'View all projects and their notes',
-  },
-  {
-    href: '/bookmarks',
-    icon: BookmarkIcon,
-    label: 'Bookmarks',
-    description: 'Access bookmarked notes by project',
-  },
-  {
-    href: '/settings',
-    icon: GearIcon,
-    label: 'Settings',
-    description: 'Manage account and preferences',
-  },
-]
-
-interface Bucket {
-  id: string
-  name: string
-  emoji: string
-  created_at: string
-  updated_at: string
-}
-
-// Add this constant at the top of the file, after the imports
-const BUCKET_EMOJIS = [
-  '📝', // Notes
-  '📚', // Books
-  '💡', // Ideas
-  '🎯', // Goals
-  '📋', // Checklist
-  '📎', // Attachments
-  '📌', // Important
-  '🔖', // Bookmarks
-  '📅', // Calendar
-  '📊', // Analytics
-  '💼', // Work
-  '🎓', // Education
-  '🏠', // Home
-  '💻', // Tech
-  '🎨', // Creative
-  '📱', // Mobile
-  '🔍', // Research
-  '💭', // Thoughts
-  '📸', // Photos
-  '🎵', // Music
+const navigationItems = [
+  { name: 'Home', href: '/', icon: HomeIcon },
+  { name: 'Notes', href: '/notes', icon: DocumentIcon },
+  { name: 'Projects', href: '/projects', icon: FolderIcon },
+  { name: 'Bookmarks', href: '/bookmarks', icon: BookmarkIcon },
+  { name: 'Tags', href: '/tags', icon: TagIcon },
+  { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+  { name: 'Help', href: '/help', icon: QuestionMarkCircleIcon },
+  { name: 'About', href: '/about', icon: InformationCircleIcon },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [isRenameOpen, setIsRenameOpen] = useState(false)
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  const [newBucketName, setNewBucketName] = useState('')
-  const [selectedEmoji, setSelectedEmoji] = useState('📝')
-  const [editingBucket, setEditingBucket] = useState<Bucket | null>(null)
-  const [deletingBucket, setDeletingBucket] = useState<Bucket | null>(null)
-  const [buckets, setBuckets] = useState<Bucket[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
-  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false)
-  const [isBucketsExpanded, setIsBucketsExpanded] = useState(true)
-  const [isSearchVisible, setIsSearchVisible] = useState(false)
   const router = useRouter()
-  const { searchQuery, localQuery, setLocalQuery, isTyping } = useSearch()
+  const { settings, setSettings } = useSettings()
+  const [isSearchVisible, setIsSearchVisible] = useState(false)
 
-  // Focus the search input on initial mount for search pages
-  useEffect(() => {
-    if (pathname.startsWith('/search') && searchInputRef.current) {
-      searchInputRef.current.focus()
-    }
-  }, [pathname])
-
-  // Handle submitting the search form
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    // Navigate only on explicit form submission
-    if (localQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(localQuery.trim())}`, {
-        scroll: false,
-      })
-
-      // Focus input after navigation
-      setTimeout(() => {
-        if (searchInputRef.current) {
-          searchInputRef.current.focus()
-        }
-      }, 100)
-    } else if (pathname.startsWith('/search')) {
-      router.push('/', { scroll: false })
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      router.push('/login')
+    } catch (error) {
+      console.error('Error signing out:', error)
     }
   }
 
-  // Fetch buckets on mount
-  useEffect(() => {
-    let channel: any
-
-    async function initializeBuckets() {
-      try {
-        console.log('Initializing buckets...')
-        // Directly fetch buckets without testing access first
-        await fetchBuckets()
-
-        console.log('Setting up real-time subscription...')
-        // Subscribe to bucket changes
-        channel = supabase
-          .channel('buckets_changes')
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'buckets',
-            },
-            (payload) => {
-              if (!payload) {
-                console.error('Received null payload in bucket changes')
-                return
-              }
-
-              console.log('Received bucket change:', payload)
-
-              // Handle INSERT event
-              if (payload.eventType === 'INSERT' && payload.new) {
-                const newBucket = payload.new as Bucket
-                console.log('Adding new bucket to state:', newBucket)
-                setBuckets((prev) => {
-                  // Check if bucket already exists to prevent duplicates
-                  if (prev.some((bucket) => bucket.id === newBucket.id)) {
-                    return prev
-                  }
-                  const newBuckets = [...prev, newBucket]
-                  console.log('Updated buckets state:', newBuckets)
-                  return newBuckets
-                })
-              }
-              // Handle DELETE event
-              else if (payload.eventType === 'DELETE' && payload.old) {
-                const deletedBucket = payload.old as Bucket
-                console.log('Removing bucket from state:', deletedBucket)
-                setBuckets((prev) =>
-                  prev.filter((bucket) => bucket.id !== deletedBucket.id),
-                )
-              }
-              // Handle UPDATE event
-              else if (payload.eventType === 'UPDATE' && payload.new) {
-                const updatedBucket = payload.new as Bucket
-                console.log('Updating bucket in state:', updatedBucket)
-                setBuckets((prev) =>
-                  prev.map((bucket) =>
-                    bucket.id === updatedBucket.id ? updatedBucket : bucket,
-                  ),
-                )
-              }
-            },
-          )
-          .subscribe((status) => {
-            console.log('Subscription status:', status)
-          })
-      } catch (error) {
-        console.error('Error initializing buckets:', error)
-        toast.error(
-          'Failed to initialize buckets. Please check your connection.',
-        )
-      }
-    }
-
-    initializeBuckets()
-
-    return () => {
-      if (channel) {
-        console.log('Cleaning up subscription...')
-        channel.unsubscribe()
-      }
-    }
-  }, [])
-
-  const fetchBuckets = async () => {
-    try {
-      console.log('Fetching buckets...')
-      const { data, error } = await supabase
-        .from('buckets')
-        .select('*')
-        .order('created_at', { ascending: true })
-
-      if (error) {
-        console.error('Supabase error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-        })
-        throw error
-      }
-
-      console.log('Fetched buckets:', data)
-      setBuckets(data || [])
-    } catch (error) {
-      console.error('Error fetching buckets:', error)
-      toast.error(
-        'Failed to load buckets. Please check the console for details.',
-      )
-    }
+  const toggleSidebar = () => {
+    setSettings({
+      ...settings,
+      sidebarCollapsed: !settings.sidebarCollapsed,
+    })
   }
 
-  const handleCreateBucket = async () => {
-    if (!newBucketName.trim()) {
-      toast.error('Bucket name is required')
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      // Log the attempt
-      console.log('Attempting to create bucket:', {
-        name: newBucketName.trim(),
-        emoji: selectedEmoji,
-      })
-
-      // Create bucket with emoji
-      const { data, error } = await supabase
-        .from('buckets')
-        .insert([
-          {
-            name: newBucketName.trim(),
-            emoji: selectedEmoji,
-          },
-        ])
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Supabase error:', error)
-        throw error
-      }
-
-      if (!data) {
-        throw new Error('No data returned from bucket creation')
-      }
-
-      console.log('Bucket created successfully:', data)
-
-      // Update local state
-      setBuckets((prev) => [...prev, data])
-
-      // Reset form and close dialog
-      setNewBucketName('')
-      setSelectedEmoji('📝')
-      setIsCreateOpen(false)
-      toast.success('Bucket created successfully')
-    } catch (error) {
-      console.error('Error in bucket creation:', error)
-      const errorMessage =
-        error instanceof Error
-          ? `Failed to create bucket: ${error.message}`
-          : 'Failed to create bucket. Please try again.'
-      toast.error(errorMessage)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleDeleteBucket = async () => {
-    if (!deletingBucket) return
-
-    try {
-      // Optimistically update the UI
-      setBuckets((prev) =>
-        prev.filter((bucket) => bucket.id !== deletingBucket.id),
-      )
-
-      const { error } = await supabase
-        .from('buckets')
-        .delete()
-        .eq('id', deletingBucket.id)
-
-      if (error) {
-        // If there's an error, revert the optimistic update
-        await fetchBuckets()
-        throw error
-      }
-
-      setIsDeleteOpen(false)
-      setDeletingBucket(null)
-      toast.success('Bucket deleted successfully')
-    } catch (error) {
-      console.error('Error deleting bucket:', error)
-      toast.error('Failed to delete bucket')
-    }
-  }
-
-  const handleRenameBucket = async () => {
-    if (!editingBucket || !newBucketName.trim()) return
-
-    setIsLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('buckets')
-        .update({
-          name: newBucketName.trim(),
-          emoji: selectedEmoji,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', editingBucket.id)
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Supabase error:', error)
-        throw error
-      }
-
-      // Immediately update the buckets state with the renamed bucket
-      if (data) {
-        setBuckets((prev) =>
-          prev.map((bucket) => (bucket.id === data.id ? data : bucket)),
-        )
-      }
-
-      setNewBucketName('')
-      setSelectedEmoji('📝')
-      setIsRenameOpen(false)
-      setEditingBucket(null)
-      toast.success('Bucket renamed successfully')
-    } catch (error) {
-      console.error('Error renaming bucket:', error)
-      toast.error('Failed to rename bucket')
-    } finally {
-      setIsLoading(false)
-    }
+  const handleSearchIconClick = () => {
+    const e = new KeyboardEvent('keydown', {
+      key: 'k',
+      metaKey: true,
+      ctrlKey: false,
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    })
+    document.dispatchEvent(e)
   }
 
   return (
-    <aside className="sidebar fixed left-0 top-0 flex h-screen w-[240px] flex-col gap-6 border-r border-border bg-background/80 p-3 backdrop-blur-xl">
-      <div className="flex items-center justify-between">
-        <Link href="/">
-          <Image
-            src="/wannakeep-logo.svg"
-            alt="Wannakeep"
-            width={140}
-            height={140}
-            priority
-            className="cursor-pointer transition-opacity hover:opacity-80 dark:invert"
-          />
-        </Link>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-          onClick={() => setIsSearchVisible(!isSearchVisible)}
+    <div
+      className={cn(
+        'h-screen border-r border-border bg-background transition-all duration-300',
+        settings.sidebarCollapsed ? 'w-[60px]' : 'w-[240px]',
+      )}
+    >
+      <div className="flex h-14 items-center justify-between border-b border-border px-4">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSearchIconClick}
+            className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <MagnifyingGlassIcon className="h-5 w-5" />
+          </button>
+          {!settings.sidebarCollapsed && (
+            <span className="text-lg font-semibold">Wannakeep</span>
+          )}
+        </div>
+        <button
+          onClick={toggleSidebar}
+          className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
-          <MagnifyingGlassIcon className="h-4 w-4" />
-        </Button>
+          {settings.sidebarCollapsed ? (
+            <ChevronRightIcon className="h-5 w-5" />
+          ) : (
+            <ChevronLeftIcon className="h-5 w-5" />
+          )}
+        </button>
       </div>
 
-      {isSearchVisible && (
-        <div className="relative">
-          <form onSubmit={handleSearch}>
-            <div className="relative">
-              <MagnifyingGlassIcon
-                className={`absolute left-2.5 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 ${isTyping ? 'text-foreground' : 'text-gray-400 dark:text-gray-500'}`}
-              />
-
-              <Input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search notes..."
-                value={localQuery}
-                onChange={(e) => {
-                  setLocalQuery(e.target.value)
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    e.preventDefault()
-                    setLocalQuery('')
-                    if (pathname.startsWith('/search')) {
-                      router.push('/', { scroll: false })
-                    }
-                  }
-                }}
-                className={`
-                  h-8 w-full border-0 bg-gray-100 pl-8 pr-8
-                  shadow-sm transition-colors
-                  focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 dark:bg-gray-800
-                  ${isTyping ? 'font-medium text-foreground' : ''}
-                  rounded-md text-sm placeholder-gray-300 dark:placeholder-gray-500
-                `}
-                style={{
-                  color: 'var(--foreground)',
-                  caretColor: 'var(--foreground)',
-                  opacity: 0.95,
-                }}
-              />
-
-              {/* Clear button */}
-              {localQuery && (
-                <button
-                  type="button"
-                  className="absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  onClick={() => {
-                    setLocalQuery('')
-                    if (pathname.startsWith('/search')) {
-                      router.push('/', { scroll: false })
-                    }
-                  }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-3.5 w-3.5"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              )}
-
-              {/* Search button - appears when typing to allow explicit search */}
-              {isTyping &&
-                localQuery.trim() &&
-                !pathname.startsWith('/search') && (
-                  <button
-                    type="submit"
-                    className="absolute right-8 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                    title="Execute search"
-                  >
-                    <ArrowRightIcon className="h-3.5 w-3.5" />
-                  </button>
-                )}
-
-              {/* Typing indicator - only show when typing but not showing search button */}
-              {isTyping &&
-                (!localQuery.trim() || pathname.startsWith('/search')) && (
-                  <div className="typing-indicator absolute right-8 top-1/2 flex -translate-y-1/2 space-x-0.5">
-                    <div className="h-1 w-1 rounded-full bg-gray-400 dark:bg-gray-500"></div>
-                    <div className="h-1 w-1 rounded-full bg-gray-400 dark:bg-gray-500"></div>
-                    <div className="h-1 w-1 rounded-full bg-gray-400 dark:bg-gray-500"></div>
-                  </div>
-                )}
-            </div>
-          </form>
-        </div>
-      )}
-
-      <nav className="flex flex-col gap-1">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon
+      <nav className="flex flex-col gap-1 p-2">
+        {navigationItems.map((item) => {
           const isActive = pathname === item.href
-
-          // Special handling for "New" button to force reset on home page
-          if (item.label === 'New') {
-            return (
-              <button
-                key={item.href}
-                className={cn(
-                  'sidebar-item group text-left',
-                  isActive && 'active',
-                )}
-                title={item.description}
-                onClick={() => {
-                  // If already on home page, we want to reload it to clear state
-                  if (pathname === '/') {
-                    // Force a query parameter change to trigger useEffect in Home
-                    router.push('/?new=' + Date.now())
-                  } else {
-                    // Normal navigation to home
-                    router.push('/')
-                  }
-                }}
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </button>
-            )
-          }
-
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn('sidebar-item group', isActive && 'active')}
-              title={item.description}
+            <button
+              key={item.name}
+              onClick={() => router.push(item.href)}
+              className={cn(
+                'flex items-center gap-2 rounded-md px-2 py-2 text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              )}
             >
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </Link>
+              <item.icon className="h-5 w-5" />
+              {!settings.sidebarCollapsed && <span>{item.name}</span>}
+            </button>
           )
         })}
       </nav>
 
-      <div className="mt-2 flex flex-col gap-2">
-        <div
-          className="flex cursor-pointer items-center justify-between px-2"
-          onClick={() => setIsBucketsExpanded(!isBucketsExpanded)}
+      <div className="absolute bottom-0 w-full border-t border-border p-2">
+        <button
+          onClick={handleSignOut}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
-          <div className="flex items-center gap-1">
-            <ChevronDownIcon
-              className={`h-4 w-4 text-muted-foreground transition-transform ${isBucketsExpanded ? '' : '-rotate-90'}`}
-            />
-            <h3 className="text-sm font-medium text-muted-foreground">
-              Buckets
-            </h3>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-            onClick={(e) => {
-              e.stopPropagation() // Prevent the collapse toggle from firing
-              setIsCreateOpen(true)
-            }}
-          >
-            <PlusIcon className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {isBucketsExpanded && (
-          <div className="flex flex-col">
-            {buckets.length > 0 ? (
-              buckets.map((bucket) => (
-                <div
-                  key={bucket.id}
-                  className={cn(
-                    'group flex items-center rounded-md',
-                    openDropdownId === bucket.id
-                      ? 'bg-secondary/50'
-                      : 'hover:bg-secondary/50',
-                  )}
-                >
-                  <Link
-                    href={`/buckets/${bucket.id}`}
-                    className={cn(
-                      'flex h-8 w-full flex-1 items-center px-2 text-left text-[13px] transition-colors hover:text-primary',
-                      pathname === `/buckets/${bucket.id}` &&
-                        'bg-secondary text-foreground',
-                    )}
-                  >
-                    <div className="flex w-full items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span>{bucket.emoji}</span>
-                        <span>{bucket.name}</span>
-                      </div>
-                      <DropdownMenu
-                        open={openDropdownId === bucket.id}
-                        onOpenChange={(open) =>
-                          setOpenDropdownId(open ? bucket.id : null)
-                        }
-                      >
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                              'h-7 w-7 text-muted-foreground hover:text-foreground',
-                              openDropdownId === bucket.id
-                                ? 'opacity-100'
-                                : 'opacity-0 group-hover:opacity-100',
-                            )}
-                          >
-                            <DotsHorizontalIcon className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setEditingBucket(bucket)
-                              setNewBucketName(bucket.name)
-                              setIsRenameOpen(true)
-                            }}
-                          >
-                            <Pencil1Icon className="mr-2 h-4 w-4" />
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => {
-                              setDeletingBucket(bucket)
-                              setIsDeleteOpen(true)
-                            }}
-                          >
-                            <TrashIcon className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </Link>
-                </div>
-              ))
-            ) : (
-              <p className="px-3 text-xs text-muted-foreground">
-                No buckets yet
-              </p>
-            )}
-          </div>
-        )}
+          <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+          {!settings.sidebarCollapsed && <span>Sign out</span>}
+        </button>
       </div>
-
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Bucket</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="flex items-center gap-2">
-              <Popover
-                open={isEmojiPickerOpen}
-                onOpenChange={setIsEmojiPickerOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 text-xl"
-                  >
-                    {selectedEmoji}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-2">
-                  <div className="grid grid-cols-5 gap-1">
-                    {BUCKET_EMOJIS.map((emoji) => (
-                      <Button
-                        key={emoji}
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-xl hover:bg-secondary"
-                        onClick={() => {
-                          setSelectedEmoji(emoji)
-                          setIsEmojiPickerOpen(false)
-                        }}
-                      >
-                        {emoji}
-                      </Button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Input
-                placeholder="Enter bucket name"
-                value={newBucketName}
-                onChange={(e) => setNewBucketName(e.target.value)}
-                className="flex-1"
-                autoFocus
-                onKeyDown={(e) =>
-                  e.key === 'Enter' && !isLoading && handleCreateBucket()
-                }
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateBucket} disabled={isLoading}>
-              {isLoading ? 'Creating...' : 'Create'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rename Bucket</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="flex items-center gap-2">
-              <Popover
-                open={isEmojiPickerOpen}
-                onOpenChange={setIsEmojiPickerOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 text-xl"
-                  >
-                    {selectedEmoji}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-2">
-                  <div className="grid grid-cols-5 gap-1">
-                    {BUCKET_EMOJIS.map((emoji) => (
-                      <Button
-                        key={emoji}
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-xl hover:bg-secondary"
-                        onClick={() => {
-                          setSelectedEmoji(emoji)
-                          setIsEmojiPickerOpen(false)
-                        }}
-                      >
-                        {emoji}
-                      </Button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Input
-                placeholder="Enter new bucket name"
-                value={newBucketName}
-                onChange={(e) => setNewBucketName(e.target.value)}
-                className="flex-1"
-                autoFocus
-                onKeyDown={(e) =>
-                  e.key === 'Enter' && !isLoading && handleRenameBucket()
-                }
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRenameOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleRenameBucket} disabled={isLoading}>
-              {isLoading ? 'Renaming...' : 'Rename'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Bucket</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-muted-foreground">
-              Are you sure you want to delete &quot;{deletingBucket?.name}
-              &quot;? This action cannot be undone.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteBucket}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </aside>
+    </div>
   )
 }

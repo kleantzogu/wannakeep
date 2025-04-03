@@ -1622,9 +1622,7 @@ export default function Home() {
   }
 
   return (
-    <div className="fixed bottom-0 left-[240px] right-0 top-0 flex">
-      <style>{textSelectionStyles}</style>
-      <style>{animationStyles}</style>
+    <div className="flex h-full">
       {/* Left side - Text Input */}
       <div className="flex flex-1 flex-col bg-zinc-100 p-6">
         <div className="relative flex-1 rounded-lg bg-zinc-100">

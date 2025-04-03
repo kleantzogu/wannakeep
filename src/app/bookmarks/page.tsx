@@ -11,14 +11,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from '@/components/ui/accordion'
 import { generateNoteTitle } from '@/lib/utils'
 import { BookmarkIcon } from 'lucide-react'
 import {
@@ -27,13 +27,13 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-} from "@/components/ui/command"
+} from '@/components/ui/command'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { X, FolderIcon } from "lucide-react"
+} from '@/components/ui/popover'
+import { X, FolderIcon } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -86,37 +86,46 @@ export default function BookmarksPage() {
   const allTags = useMemo(() => {
     const tags = new Set<string>()
     allNotes
-      .filter(note => note.isBookmarked)
-      .forEach(note => note.tags.forEach(tag => tags.add(tag)))
+      .filter((note) => note.isBookmarked)
+      .forEach((note) => note.tags.forEach((tag) => tags.add(tag)))
     return Array.from(tags)
   }, [allNotes])
 
   // Group bookmarked notes by project
   const groupedNotes = useMemo(() => {
-    const bookmarkedNotes = allNotes.filter(note => note.isBookmarked)
-    const filteredNotes = bookmarkedNotes.filter(note => {
-      const matchesSearch = note.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           note.title.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesSentiment = selectedSentiment === 'all' || note.sentiment === selectedSentiment
-      const matchesTags = selectedTags.length === 0 || 
-                         selectedTags.every(tag => note.tags.includes(tag))
+    const bookmarkedNotes = allNotes.filter((note) => note.isBookmarked)
+    const filteredNotes = bookmarkedNotes.filter((note) => {
+      const matchesSearch =
+        note.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        note.title.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesSentiment =
+        selectedSentiment === 'all' || note.sentiment === selectedSentiment
+      const matchesTags =
+        selectedTags.length === 0 ||
+        selectedTags.every((tag) => note.tags.includes(tag))
       return matchesSearch && matchesSentiment && matchesTags
     })
 
-    const grouped = filteredNotes.reduce((acc, note) => {
-      const projectId = note.projectId
-      if (!acc[projectId]) {
-        // Find the project to get its title
-        const project = projects.find(p => p.id === projectId)
-        acc[projectId] = {
-          projectId,
-          notes: [],
-          title: project?.title || 'Untitled Project'
+    const grouped = filteredNotes.reduce(
+      (acc, note) => {
+        const projectId = note.projectId
+        if (!acc[projectId]) {
+          // Find the project to get its title
+          const project = projects.find((p) => p.id === projectId)
+          acc[projectId] = {
+            projectId,
+            notes: [],
+            title: project?.title || 'Untitled Project',
+          }
         }
-      }
-      acc[projectId].notes.push(note)
-      return acc
-    }, {} as Record<string, { projectId: string; notes: typeof allNotes; title: string }>)
+        acc[projectId].notes.push(note)
+        return acc
+      },
+      {} as Record<
+        string,
+        { projectId: string; notes: typeof allNotes; title: string }
+      >,
+    )
 
     return grouped
   }, [allNotes, projects, searchQuery, selectedSentiment, selectedTags])
@@ -124,9 +133,11 @@ export default function BookmarksPage() {
   const handleBookmark = async (noteId: string) => {
     setBookmarkLoading(noteId)
     setError(null)
-    
+
     try {
-      await updateNote(noteId, { isBookmarked: !allNotes.find(n => n.id === noteId)?.isBookmarked })
+      await updateNote(noteId, {
+        isBookmarked: !allNotes.find((n) => n.id === noteId)?.isBookmarked,
+      })
     } catch (error) {
       console.error('Error updating bookmark:', error)
       setError('Failed to update bookmark')
@@ -220,7 +231,7 @@ export default function BookmarksPage() {
       if (error) throw error
       if (!data) throw new Error('No data returned from insert')
 
-      setBuckets(prev => [...prev, data])
+      setBuckets((prev) => [...prev, data])
       setIsCreateBucketOpen(false)
       setNewBucketName('')
       toast.success('Bucket created successfully')
@@ -238,10 +249,10 @@ export default function BookmarksPage() {
   }
 
   return (
-    <div className="h-full pl-[240px] bg-background">
+    <div className="h-full bg-background">
       <div className="h-full p-3">
         {/* Header with filters */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <h1 className="text-xl font-semibold">Bookmarks</h1>
 
           <div className="flex items-center gap-2">
@@ -259,11 +270,8 @@ export default function BookmarksPage() {
               </PopoverTrigger>
               <PopoverContent className="w-[200px] p-0" align="start">
                 <Command>
-                  <CommandInput 
-                    placeholder="Search tags..." 
-                    className="h-8"
-                  />
-                  <div className="p-1 space-y-1">
+                  <CommandInput placeholder="Search tags..." className="h-8" />
+                  <div className="space-y-1 p-1">
                     {allTags.length === 0 ? (
                       <p className="py-6 text-center text-sm text-muted-foreground">
                         No tags found.
@@ -272,19 +280,19 @@ export default function BookmarksPage() {
                       allTags.map((tag) => (
                         <button
                           key={tag}
-                          className="flex items-center gap-2 w-full rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
                           onClick={() => {
-                            setSelectedTags(prev => 
-                              prev.includes(tag) 
-                                ? prev.filter(t => t !== tag)
-                                : [...prev, tag]
+                            setSelectedTags((prev) =>
+                              prev.includes(tag)
+                                ? prev.filter((t) => t !== tag)
+                                : [...prev, tag],
                             )
                           }}
                         >
-                          <div 
+                          <div
                             className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
                               selectedTags.includes(tag)
-                                ? 'bg-primary border-primary text-primary-foreground'
+                                ? 'border-primary bg-primary text-primary-foreground'
                                 : 'border-primary'
                             }`}
                           >
@@ -312,8 +320,11 @@ export default function BookmarksPage() {
               </PopoverContent>
             </Popover>
 
-            <Select value={selectedSentiment} onValueChange={setSelectedSentiment}>
-              <SelectTrigger className="w-[160px] h-8">
+            <Select
+              value={selectedSentiment}
+              onValueChange={setSelectedSentiment}
+            >
+              <SelectTrigger className="h-8 w-[160px]">
                 <SelectValue placeholder="All Sentiments" />
               </SelectTrigger>
               <SelectContent>
@@ -328,22 +339,24 @@ export default function BookmarksPage() {
 
         {/* Selected Tags */}
         {selectedTags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-6">
+          <div className="mb-6 flex flex-wrap gap-1.5">
             {selectedTags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="gap-1 h-6">
+              <Badge key={tag} variant="secondary" className="h-6 gap-1">
                 {tag}
                 <button
-                  className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      setSelectedTags(selectedTags.filter(t => t !== tag))
+                    if (e.key === 'Enter') {
+                      setSelectedTags(selectedTags.filter((t) => t !== tag))
                     }
                   }}
                   onMouseDown={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
                   }}
-                  onClick={() => setSelectedTags(selectedTags.filter(t => t !== tag))}
+                  onClick={() =>
+                    setSelectedTags(selectedTags.filter((t) => t !== tag))
+                  }
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -356,19 +369,19 @@ export default function BookmarksPage() {
         <div className="space-y-8">
           {Object.values(groupedNotes).map((project) => (
             <div key={project.projectId}>
-              <h2 className="font-medium mb-4">{project.title}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+              <h2 className="mb-4 font-medium">{project.title}</h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {project.notes.map((note) => (
                   <div
                     key={note.id}
-                    className={`p-4 rounded-lg border ${getNoteColorClass(note.sentiment)} shadow-sm hover:shadow-md transition-all group relative`}
+                    className={`rounded-lg border p-4 ${getNoteColorClass(note.sentiment)} group relative shadow-sm transition-all hover:shadow-md`}
                   >
                     <p className="text-base">{note.content}</p>
-                    <div className="flex flex-wrap gap-1.5 mt-3">
+                    <div className="mt-3 flex flex-wrap gap-1.5">
                       {note.tags.map((tag, tagIndex) => (
-                        <span 
+                        <span
                           key={tagIndex}
-                          className="bg-white/50 px-2 py-0.5 rounded text-xs font-normal opacity-75"
+                          className="rounded bg-white/50 px-2 py-0.5 text-xs font-normal opacity-75"
                         >
                           {tag}
                         </span>
@@ -377,14 +390,16 @@ export default function BookmarksPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className={`absolute right-2 top-2 h-6 w-6 p-1 opacity-0 group-hover:opacity-100 transition-opacity ${note.isBookmarked ? '!opacity-100' : ''}`}
+                      className={`absolute right-2 top-2 h-6 w-6 p-1 opacity-0 transition-opacity group-hover:opacity-100 ${note.isBookmarked ? '!opacity-100' : ''}`}
                       onClick={() => handleBookmark(note.id)}
                       disabled={bookmarkLoading === note.id}
                     >
                       {bookmarkLoading === note.id ? (
                         <div className="h-full w-full animate-spin rounded-full border-2 border-black/10 border-t-black" />
                       ) : (
-                        <BookmarkIcon className={`h-full w-full ${note.isBookmarked ? 'fill-current' : ''}`} />
+                        <BookmarkIcon
+                          className={`h-full w-full ${note.isBookmarked ? 'fill-current' : ''}`}
+                        />
                       )}
                     </Button>
                     <div className="absolute bottom-2 right-2">
@@ -393,7 +408,7 @@ export default function BookmarksPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground"
+                            className="h-7 w-7 text-muted-foreground opacity-0 hover:text-foreground group-hover:opacity-100"
                           >
                             <DotsHorizontalIcon className="h-4 w-4" />
                           </Button>
@@ -429,7 +444,7 @@ export default function BookmarksPage() {
       </div>
 
       {error && (
-        <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="fixed bottom-4 right-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
           {error}
         </div>
       )}
@@ -440,11 +455,15 @@ export default function BookmarksPage() {
           <DialogHeader>
             <DialogTitle>Delete Note</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this note? This action cannot be undone.
+              Are you sure you want to delete this note? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDeleteNote}>
@@ -465,8 +484,8 @@ export default function BookmarksPage() {
           </DialogHeader>
           <div className="space-y-4">
             {/* Existing buckets */}
-            <div className="space-y-2 max-h-[240px] overflow-y-auto">
-              {buckets.map(bucket => (
+            <div className="max-h-[240px] space-y-2 overflow-y-auto">
+              {buckets.map((bucket) => (
                 <Button
                   key={bucket.id}
                   variant="outline"
@@ -479,28 +498,35 @@ export default function BookmarksPage() {
                 </Button>
               ))}
               {buckets.length === 0 && (
-                <p className="text-sm text-muted-foreground">No buckets available</p>
+                <p className="text-sm text-muted-foreground">
+                  No buckets available
+                </p>
               )}
             </div>
-            
+
             {/* Create new bucket section */}
-            <div className="pt-4 border-t">
-              <h3 className="text-sm font-medium mb-2">Create New Bucket</h3>
+            <div className="border-t pt-4">
+              <h3 className="mb-2 text-sm font-medium">Create New Bucket</h3>
               <div className="flex gap-2">
                 <Input
                   placeholder="Enter bucket name"
                   value={newBucketName}
                   onChange={(e) => setNewBucketName(e.target.value)}
                   className="flex-1"
-                  onKeyDown={(e) => e.key === 'Enter' && !isLoading && newBucketName.trim() && handleCreateBucket()}
+                  onKeyDown={(e) =>
+                    e.key === 'Enter' &&
+                    !isLoading &&
+                    newBucketName.trim() &&
+                    handleCreateBucket()
+                  }
                 />
-                <Button 
+                <Button
                   onClick={handleCreateBucket}
                   disabled={isLoading || !newBucketName.trim()}
                   className="bg-black text-white hover:bg-black/90"
                 >
                   {isLoading ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground"/>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
                   ) : (
                     <Plus className="h-4 w-4" />
                   )}
@@ -509,7 +535,10 @@ export default function BookmarksPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddToBucketOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddToBucketOpen(false)}
+            >
               Cancel
             </Button>
           </DialogFooter>
@@ -533,10 +562,13 @@ export default function BookmarksPage() {
               className="w-full"
             />
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsCreateBucketOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsCreateBucketOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleCreateBucket}
                 className="bg-black text-white hover:bg-black/90"
                 disabled={isLoading}
@@ -549,4 +581,4 @@ export default function BookmarksPage() {
       </Dialog>
     </div>
   )
-} 
+}
